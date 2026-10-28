@@ -1,54 +1,153 @@
-# CrimeSketch.IO: AI Crime Scene Sketch Generator from Witness Description
-CrimeSketch.io is a secure, full-stack web platform that helps authorized investigators turn witness descriptions into reviewable forensic-style facial sketches. Witnesses often struggle to describe a face, and sketch artists aren’t always available. CrimeSketch.io gives investigators a faster, structured, fully documented starting point.
+# CrimeSketch.io — AI Crime Scene Sketch Generator
 
-# How it works
+CrimeSketch.io is a secure, full-stack starter platform designed to help authorized investigators turn witness descriptions into reviewable forensic-style facial sketches. It provides structured evidence intake, AI-assisted facial attribute extraction, versioned sketch generation, case management, and reporting workflows.
 
-STEP1 :\
-Evidence intake:\
-Investigators add witness input as text, voice recordings, images or PDFs. Voice is transcribed locally with Whisper, PDFs are text-extracted, and non-English statements are translated into English. The original statement is kept next to the translation, and the investigator can review and correct each transcript.
+This project is a Hackfest 2026 prototype, not a certified forensic or evidence-management system.
 
-STEP 2:\
-Structured description:\
-Gemma 4, running locally through Ollama, extracts facial attributes: age range, face shape, jawline, eyes, eyebrows, nose, mouth, hairline, hairstyle, facial hair and distinguishing features. Anything the witness didn’t state is marked “Not provided”, and the AI asks one focused follow-up question at a time. The investigator edits and confirms the description before it can be used.
+## How It Works
 
-STEP 3:\
-Sketch generation:\
-OPEN-AI API gpt-4 model creates a monochrome, pencil-style sketch from the confirmed attributes. Every generation is saved as a numbered version.
-Iterative refinement. Through a chat, the investigator can say things like “make the nose narrower” or “thicker eyebrows”. Each request becomes a reviewable change that can be accepted, rejected, retried or restored, and ambiguous requests trigger a clarifying question. Nothing replaces the approved sketch without the investigator’s explicit choice.
+### Step 1: Evidence Intake
+Investigators can work with witness descriptions and supported evidence formats, including text, audio, images, and PDFs. Depending on the configured integrations, evidence can be transcribed, translated, or text-extracted. Original statements should remain available for investigator review.
 
-STEP 4\
-Final output:\
-After approving a sketch, the investigator can attempt an approximate 3D face model through Hitem3D. They can also generate a professional PDF case report, written with Gemini Flash from confirmed case data only. It covers the witness statements, translations, confirmed attributes, evidence inventory, sketch history, approval status and limitations, and never invents facts.
+### Step 2: Structured Facial Description
+The intended workflow uses a local Gemma model through Ollama to help extract facial attributes such as age range, face shape, jawline, eyes, eyebrows, nose, mouth, hair, facial hair, and distinguishing features.
 
-# Security and accountability
+Unspecified attributes should remain marked as not provided. Investigators review and confirm the description before using it for sketch generation.
 
-1.Email and password login with a separate emailed one-time code, with expiry, attempt limits and rate limiting.\
-2.Administrator, investigator and reviewer roles, enforced on the server for every operation.\
-3.Private evidence storage, with files served only to authorized users.\
-4.An append-only audit log recording logins, case access, uploads, sketch generation, approvals and report exports, with filters and CSV export.\
-5.Server-observed IP and device metadata is recorded. The platform does not claim MAC-address tracking, which browsers don’t expose.\
+### Step 3: Sketch Generation and Refinement
+The project includes an adapter for an Automatic1111/Forge-compatible Stable Diffusion WebUI API using a Stable Diffusion 1.5 checkpoint. When configured, it can generate and refine monochrome sketch-style images.
 
+Generated versions should remain reviewable. Investigators should explicitly approve changes rather than having an earlier approved sketch silently replaced.
 
+### Step 4: Review and Reporting
+The intended workflow includes reviewing the sketch, generating a case report, and optionally creating a 3D face model.
 
-# Tech stack:
-Node.js and Express, a SQL database, Ollama with Gemma 4, Whisper, OPEN-AI API gpt-4 model, Gemini Flash and Hitem3D.
+PDF report layout and Gemini-based structured report content are implemented when configured. Whisper transcription and Hitem3D generation still require supported provider-specific adapters in this source project.
 
-# Implementation:
-To Run the backend:\
-cd backend\
-create a .env file\
-npm i\
-npm start or npm run dev
+## Security and Accountability
 
-To Run the frontend:\
-cd frontend\
-npm i\
+- Password-based authentication, email verification, and email OTP require the appropriate database and SMTP configuration.
+- Role-based permissions are enforced by the backend for supported operations.
+- Case information and evidence uploads require appropriate access controls.
+- Audit events are implemented for defined backend actions; extend coverage as additional integrations are completed.
+- IP address and user-agent metadata may be recorded. These do not prove identity, and ordinary websites cannot access a visitor's MAC address.
+- Evidence, transcripts, prompts, and reports may contain sensitive information. Review authorization, data retention, and provider data-handling policies before using real case material.
+
+## Technology Stack
+
+- **Frontend:** React and Vite
+- **Backend:** Node.js and Express
+- **Database:** PostgreSQL
+- **Local AI:** Ollama with a supported Gemma model
+- **Sketch generation:** Automatic1111/Forge-compatible Stable Diffusion WebUI API
+- **Report content:** Gemini API
+- **Document generation:** jsPDF
+- **Optional integrations:** Whisper-compatible transcription and Hitem3D, subject to adapter availability
+
+## Requirements
+
+- Node.js 20 or later
+- npm
+- PostgreSQL 14 or later
+- SMTP credentials for email verification and OTP
+- Optional: Ollama and a locally available Gemma model
+- Optional: configured Gemini API and Stable Diffusion WebUI services
+
+## Run the Project
+
+Open PowerShell in the project root directory.
+
+### 1. Install dependencies
+
+```powershell
+npm install
+npm --prefix client install
+```
+
+### 2. Configure environment variables
+
+Copy `.env.example` to `.env` and configure the required values, including the PostgreSQL connection string, a strong `JWT_SECRET`, SMTP settings, and `CLIENT_ORIGIN`.
+
+Never commit `.env`, API keys, passwords, or other secrets to GitHub.
+
+### 3. Initialize the database
+
+Create the PostgreSQL database, for example `ai_nexus_forensics`, and apply the schema:
+
+```powershell
+psql -U postgres -h localhost -p 5432 -d ai_nexus_forensics -f server/schema.sql
+```
+
+Adjust the username, port, and database name to match your configuration.
+
+### 4. Start the application
+
+From the project root:
+
+```powershell
 npm run dev
+```
 
+Open the local frontend address shown by Vite, usually `http://localhost:5173`.
 
-To Run the databases:\
-connect the db string in the .env file\
-start postgres in local machine
+If the root development script is unavailable, check `package.json` for the configured frontend and backend scripts.
 
-make sure you run gemma 4, in stable localserver :)
+### 5. Verify the backend
 
+Open:
+
+`http://localhost:4100/api/health`
+
+The health endpoint reports the backend and integration status. A configured endpoint does not necessarily mean every provider-specific workflow is fully implemented.
+
+## Optional AI Configuration
+
+### Gemma Through Ollama
+Install Ollama, check available model tags with `ollama list`, and configure `OLLAMA_BASE_URL` and `OLLAMA_MODEL` in `.env`. Use a model tag that is actually available in your installation.
+
+### Stable Diffusion Sketch Generation
+Run an Automatic1111/Forge-compatible WebUI with API access enabled and a compatible Stable Diffusion 1.5 checkpoint loaded. Configure `STABLE_DIFFUSION_API_URL` in the server environment. Keep the inference service private and do not expose an unauthenticated API to the public internet.
+
+### Gemini Reports
+Configure `GEMINI_API_KEY` and `GEMINI_MODEL` on the server. Never expose the API key in frontend code or a `VITE_*` variable.
+
+### Whisper and Hitem3D
+These integrations require provider-specific adapters and are not fully implemented in this source project. Do not treat them as operational until the required adapters and services have been tested.
+
+## Current Implementation Status
+
+| Capability | Status |
+|---|---|
+| React/Vite interface and navigation | Implemented |
+| Demo workspace | Implemented; sample data only |
+| PostgreSQL schema and backend APIs | Implemented; requires configuration |
+| Password authentication and email OTP | Requires database and SMTP configuration |
+| Case metadata and private file upload | Backend starter implemented; production hardening required |
+| Gemma/Ollama assistant | Available when configured |
+| Gemini report content | Available when configured |
+| PDF layout and download | Implemented |
+| Stable Diffusion generation/refinement | Adapter implemented; requires compatible running service |
+| Whisper transcription | Provider-specific adapter required |
+| Hitem3D 3D generation | Provider-specific adapter required |
+| Audit events | Implemented for defined actions; coverage can be extended |
+| Tamper-evident audit storage and digital signatures | Not implemented |
+
+## Project Structure
+
+```text
+ai-nexus-forensics/
+├── client/
+│   └── src/
+├── server/
+│   ├── index.js
+│   ├── schema.sql
+│   └── private_uploads/
+├── docs/
+├── .env.example
+├── package.json
+└── README.md
+```
+
+## Security Notice
+
+Use demo mode only with sample data. Before any real investigative use, review authentication, authorization, evidence retention, upload validation, audit coverage, database backups, legal requirements, and external AI provider data-handling terms. This prototype is not a substitute for a validated forensic system.
