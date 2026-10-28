@@ -1,0 +1,27 @@
+CrimeSketch.io — START HERE (Windows)
+
+1. Install Node.js 20+ (LTS) and PostgreSQL if you need live backend mode.
+   - Node.js: https://nodejs.org/
+   - PostgreSQL: https://www.postgresql.org/download/windows/
+
+2. Extract this ZIP and open the ai-nexus-forensics folder in a terminal.
+
+3. Install packages:
+   npm install
+   npm --prefix client install
+
+4. Start the local development servers:
+   npm run dev
+
+5. Open http://localhost:5173 and choose ENTER DEMO WORKSPACE.
+   Demo mode lets you explore screens and forms without a database or API keys.
+   Do not upload real evidence into demo mode. Demo actions do not provide real AI output.
+
+For live mode, read README.md fully:
+- configure .env from .env.example
+- configure PostgreSQL and run server/schema.sql
+- configure SMTP for verification and OTP login
+- optionally configure Ollama/Gemma, Gemini Flash, and an SD 1.5 WebUI-compatible endpoint
+- Whisper and Hitem3D adapters are not complete and will report unavailable rather than inventing output
+
+Note: this source package could not run npm install/build in the authoring environment because npm registry access failed. Run the install commands on a machine with npm registry access.
