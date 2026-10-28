@@ -13,7 +13,7 @@ Gemma 4, running locally through Ollama, extracts facial attributes: age range, 
 
 STEP 3:\
 Sketch generation:\
-Stable Diffusion 1.5 creates a monochrome, pencil-style sketch from the confirmed attributes. Every generation is saved as a numbered version.
+OPEN-AI API gpt-4 model creates a monochrome, pencil-style sketch from the confirmed attributes. Every generation is saved as a numbered version.
 Iterative refinement. Through a chat, the investigator can say things like “make the nose narrower” or “thicker eyebrows”. Each request becomes a reviewable change that can be accepted, rejected, retried or restored, and ambiguous requests trigger a clarifying question. Nothing replaces the approved sketch without the investigator’s explicit choice.
 
 STEP 4\
@@ -31,4 +31,24 @@ After approving a sketch, the investigator can attempt an approximate 3D face mo
 
 
 # Tech stack:
-Node.js and Express, a SQL database, Ollama with Gemma 4, Whisper, Stable Diffusion 1.5, Gemini Flash and Hitem3D.
+Node.js and Express, a SQL database, Ollama with Gemma 4, Whisper, OPEN-AI API gpt-4 model, Gemini Flash and Hitem3D.
+
+# Implementation:
+To Run the backend:\
+cd backend\
+create a .env file\
+npm i\
+npm start or npm run dev\
+
+To Run the frontend:\
+cd frontend\
+npm i\
+npm run dev\
+
+
+To Run the databases:\
+connect the db string in the .env file\
+start postgres in local machine\
+
+make sure you run gemma 4, in stable localserver\
+\
