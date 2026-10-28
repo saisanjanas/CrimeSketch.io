@@ -50,5 +50,5 @@ To Run the databases:\
 connect the db string in the .env file\
 start postgres in local machine
 
-make sure you run gemma 4, in stable localserver\
+make sure you run gemma 4, in stable localserver :)
 
