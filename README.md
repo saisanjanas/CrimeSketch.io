@@ -38,17 +38,17 @@ To Run the backend:\
 cd backend\
 create a .env file\
 npm i\
-npm start or npm run dev\
+npm start or npm run dev
 
 To Run the frontend:\
 cd frontend\
 npm i\
-npm run dev\
+npm run dev
 
 
 To Run the databases:\
 connect the db string in the .env file\
-start postgres in local machine\
+start postgres in local machine
 
 make sure you run gemma 4, in stable localserver\
-\
+
