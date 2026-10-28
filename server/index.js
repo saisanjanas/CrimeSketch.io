@@ -1,3 +1,9 @@
+import {
+  searchSketchLibrary,
+  getSketchLibraryImage
+} from './sketch-library/matcher.js';
+
+
 import dotenv from 'dotenv';
 import express from 'express';
 import helmet from 'helmet';
@@ -547,6 +553,124 @@ app.post('/api/cases/:id/sketches/:sketchId/restore', requireDb, requireAuth, ca
     res.status(201).json({ sketch: restored, sourceVersion: source.rows[0].version });
   } catch (error) { res.status(500).json({ error: `Could not restore sketch version: ${error.message || 'storage failure'}` }); }
 });
+
+app.post('/api/sketch-library/search', requireDb, requireAuth, async (req, res) => {
+  
+app.get('/api/sketch-library/images/:id', requireDb, requireAuth, async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    // Accept only safe catalog IDs.
+    if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id)) {
+      return res.status(400).json({ error: 'Invalid sketch ID.' });
+    }
+
+    const item = await getSketchLibraryImage(id);
+
+    if (!item) {
+      return res.status(404).json({ error: 'Sketch image not found.' });
+    }
+
+    // Do not expose library images without case access.
+    // The image route requires a caseId query parameter.
+    const caseId = req.query.caseId;
+
+    if (typeof caseId !== 'string' || !/^[0-9a-f-]{36}$/i.test(caseId)) {
+      return res.status(400).json({ error: 'A valid case ID is required.' });
+    }
+
+    const access = await pool.query(
+      `SELECT c.id
+       FROM cases c
+       LEFT JOIN case_permissions cp
+         ON cp.case_id = c.id AND cp.user_id = $2
+       WHERE c.id = $1
+         AND ($3 = 'administrator'
+           OR c.created_by = $2
+           OR c.assigned_to = $2
+           OR cp.user_id IS NOT NULL)`,
+      [caseId, req.user.id, req.user.role]
+    );
+
+    if (!access.rowCount) {
+      return res.status(404).json({ error: 'Case not found or access denied.' });
+    }
+
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+
+    const extension = item.imagePath.toLowerCase().split('.').pop();
+    const contentTypes = {
+      png: 'image/png',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      webp: 'image/webp'
+    };
+
+    if (!contentTypes[extension]) {
+      return res.status(415).json({ error: 'Unsupported image format.' });
+    }
+
+    return res.type(contentTypes[extension]).sendFile(item.imagePath);
+  } catch (error) {
+    console.error('Sketch image delivery failed:', error);
+    return res.status(500).json({ error: 'Could not load sketch image.' });
+  }
+});
+
+  const parsed = z.object({
+    caseId: z.string().uuid(),
+    query: z.string().trim().min(3).max(2000),
+    limit: z.coerce.number().int().min(1).max(20).optional()
+  }).safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: 'Provide a valid case ID and description.'
+    });
+  }
+
+  try {
+    const access = await pool.query(
+      `SELECT c.id
+       FROM cases c
+       LEFT JOIN case_permissions cp
+         ON cp.case_id = c.id AND cp.user_id = $2
+       WHERE c.id = $1
+         AND ($3 = 'administrator'
+           OR c.created_by = $2
+           OR c.assigned_to = $2
+           OR cp.user_id IS NOT NULL)`,
+      [parsed.data.caseId, req.user.id, req.user.role]
+    );
+
+    if (!access.rowCount) {
+      return res.status(404).json({
+        error: 'Case not found or access denied.'
+      });
+    }
+
+    const results = await searchSketchLibrary(
+      parsed.data.query,
+      parsed.data.limit || 10
+    );
+
+    await audit(req, {
+      action: 'sketch_library.search',
+      caseId: parsed.data.caseId,
+      resource: 'sketch_library',
+      details: { resultCount: results.length }
+    });
+
+    return res.json({ results });
+  } catch (error) {
+    console.error('Sketch library search failed:', error);
+    return res.status(500).json({
+      error: 'Could not search the sketch library.'
+    });
+  }
+});
+
 
 app.post('/api/ai/sketch', requireDb, requireAuth, async (req, res) => {
   const parsed = z.object({ caseId: z.string().uuid(), prompt: z.string().min(10).max(8000) }).safeParse(req.body);

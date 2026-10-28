@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "sketches": [
+    {
+      "id": "caesius-composite",
+      "filename": "caesius-composite.jpg",
+      "description": "Monochrome facial composite drawing",
+      "tags": ["facial composite", "pencil sketch", "monochrome", "portrait"],
+      "attributes": ["front-facing", "human face"],
+      "license": "Public domain (as stated on source page)",
+      "attribution": "Kencaesi",
+      "source": "https://commons.wikimedia.org/wiki/File:Caesius_facial_composite.jpg"
+    }
+  ]
+}
