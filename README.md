@@ -1,2 +1,2 @@
-# CrimeSketch.IO
-Official HackFest 2026 repository for team DesignSmith (T1-35).
+# CrimeSketch.IO: AI Crime Scene Sketch Generator from Witness Description
+CrimeSketch.io is a secure, full-stack web platform that helps authorized investigators turn witness descriptions into reviewable forensic-style facial sketches. Witnesses often struggle to describe a face, and sketch artists aren’t always available. CrimeSketch.io gives investigators a faster, structured, fully documented starting point. 
