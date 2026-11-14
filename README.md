@@ -70,16 +70,17 @@ Investigators review and confirm the extracted facial description before proceed
 
 ### 03 | 🎨 Sketch Generation & Refinement
 
-CrimeSketch.io includes an adapter for an **Automatic1111/Forge-compatible Stable Diffusion WebUI API**, using a Stable Diffusion 1.5 checkpoint.
+CrimeSketch.io uses the **Agnes AI API** for AI-powered facial sketch generation.
 
-When configured, the system can generate and refine monochrome, forensic-style sketch images.
+The Agnes AI API key is configured through the server-side environment variables, allowing the application to communicate with the image-generation provider.
 
 Features include:
 
-- AI-assisted facial sketch generation
-- Sketch refinement
-- Multiple reviewable sketch versions
-- Investigator-controlled approval
+- 🎨 AI-assisted facial sketch generation
+- ✨ Sketch refinement
+- 🖼️ Generated sketch images
+- 📁 Multiple reviewable sketch versions
+- 👨‍💻 Investigator-controlled approval
 
 **Important:** Previously approved sketches should never be silently replaced. Investigators must explicitly approve changes.
 
@@ -135,7 +136,7 @@ CrimeSketch.io combines modern web technologies with configurable AI integration
 | ⚙️ Backend | Node.js + Express |
 | 🗄️ Database | PostgreSQL |
 | 🧠 Local AI | Ollama + supported Gemma model |
-| 🎨 Sketch Generation | Automatic1111/Forge-compatible Stable Diffusion WebUI API |
+| 🎨 Sketch Generation | Agnes AI API |
 | 🤖 Report Content | Gemini API |
 | 📄 Document Generation | jsPDF |
 | 🎙️ Optional Transcription | Whisper-compatible integration |
@@ -155,8 +156,8 @@ Before setting up the project, ensure the following requirements are available.
 | SMTP | Credentials required for email verification and OTP |
 | Ollama | Optional |
 | Gemma Model | Optional, locally available |
+| Agnes AI API Key | Required for sketch generation |
 | Gemini API | Optional |
-| Stable Diffusion WebUI | Optional |
 
 ---
 
@@ -190,6 +191,7 @@ Make sure to configure:
 - Strong `JWT_SECRET`
 - SMTP settings
 - `CLIENT_ORIGIN`
+- Agnes AI API key
 
 > 🔐 **Security Reminder:** Never commit `.env`, API keys, passwords, or other secrets to GitHub.
 
@@ -267,20 +269,20 @@ OLLAMA_MODEL=
 
 Use a model tag that is actually available in your installation.
 
-### 🎨 2. Stable Diffusion Sketch Generation
+### 🎨 2. Agnes AI Sketch Generation
 
-To enable AI-powered facial sketch generation:
+CrimeSketch.io integrates the **Agnes AI API** for generating AI-assisted facial sketches.
 
-1. Run an Automatic1111/Forge-compatible WebUI.
-2. Enable API access.
-3. Load a compatible Stable Diffusion 1.5 checkpoint.
-4. Configure the WebUI endpoint:
+To configure the integration:
 
-```env
-STABLE_DIFFUSION_API_URL=
-```
+1. Obtain your Agnes AI API key.
+2. Add the API key to the server's `.env` file using the environment variable expected by your backend implementation.
+3. Ensure the backend can access the configured Agnes AI provider.
+4. Start the application and test sketch generation.
 
-> ⚠️ Keep the inference service private. Do not expose an unauthenticated API to the public internet.
+> 🔐 **Security Reminder:** Keep the Agnes AI API key on the backend. Never expose it in frontend code, a `VITE_*` variable, or a public GitHub repository.
+
+**Note:** Sketch generation requires a valid API key and a properly configured Agnes AI provider. Requests should only be marked successful after an actual generated image is returned.
 
 ### 📄 3. Gemini-Based Reports
 
@@ -315,7 +317,7 @@ The following table summarizes the current development and integration status of
 | 🧠 Gemma/Ollama Assistant | 🟡 Available when configured |
 | 🤖 Gemini Report Content | 🟡 Available when configured |
 | 📄 PDF Layout & Download | ✅ Implemented |
-| 🎨 Stable Diffusion Generation/Refinement | 🟡 Adapter implemented; requires compatible running service |
+| 🎨 Agnes AI Sketch Generation/Refinement | 🟡 Requires configured Agnes AI provider |
 | 🎙️ Whisper Transcription | 🔧 Provider-specific adapter required |
 | 🧊 Hitem3D 3D Generation | 🔧 Provider-specific adapter required |
 | 📋 Audit Events | 🟡 Implemented for defined actions; coverage can be extended |
@@ -369,6 +371,3 @@ By combining modern full-stack development with configurable AI integrations, th
   <br/>
   <sub>Hackfest 2026 | Prototype Project</sub>
 </p>
-## Security Notice
-
-Use demo mode only with sample data. Before any real investigative use, review authentication, authorization, evidence retention, upload validation, audit coverage, database backups, legal requirements, and external AI provider data-handling terms. This prototype is not a substitute for a validated forensic system.
