@@ -1,7 +1,30 @@
+# Environment variables
 .env
 .env.*
 !.env.example
+
+# Dependencies
 node_modules/
-dist/
 client/node_modules/
 server/node_modules/
+
+# Build files
+dist/
+client/dist/
+server/dist/
+
+# Vercel
+.vercel/
+
+# Private uploads
+server/private_uploads/
+
+# Backup files
+*.bak
+*.recovery-copy
+*.before-*
+*.git-check.jsx
+current_changes_backup.patch
+
+# Backup folders
+client/public_backup/

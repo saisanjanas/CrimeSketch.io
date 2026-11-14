@@ -50,7 +50,8 @@
 .cs-horizontal-shell .cs-about-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 @media(max-width:900px){.cs-horizontal-shell .cs-global-header{align-items:flex-start;flex-wrap:wrap;gap:14px}.cs-horizontal-shell .cs-nav{order:3;width:100%;justify-content:flex-start}.cs-horizontal-shell .cs-dashboard-heading{align-items:flex-start;flex-direction:column}.cs-horizontal-shell .cs-case-cards{grid-template-columns:1fr}.cs-horizontal-shell .cs-about-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.cs-horizontal-shell .cs-brand-sub{display:none}.cs-horizontal-shell .cs-header-actions{margin-left:auto}.cs-horizontal-shell .cs-session{display:none}.cs-horizontal-shell .cs-nav{gap:3px}.cs-horizontal-shell .cs-nav button{padding:8px 9px;font-size:12px}.cs-horizontal-shell .cs-counter-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.cs-horizontal-shell .cs-counter{width:min(100%,145px);height:auto;aspect-ratio:1}.cs-horizontal-shell .cs-counter strong{font-size:36px}.cs-horizontal-shell .cs-about-grid{grid-template-columns:1fr}.cs-horizontal-shell .page-wrap{padding:22px 16px}}
-/* CrimeSketch cinematic logo intro */
+
+/* CrimeSketch cinematic green-light logo intro */
 .logo-intro {
   position: fixed;
   inset: 0;
@@ -58,120 +59,121 @@
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: #08090a;
-  animation: introFadeOut 0.8s ease 2.45s forwards;
+  isolation: isolate;
+  background: #020604;
+  animation: introFadeOut 0.7s ease 2.8s forwards;
 }
 
-.intro-content {
+/* Green light appears first */
+.logo-intro::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 50%;
+  width: min(75vw, 650px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    rgba(0, 255, 128, 0.42) 0%,
+    rgba(0, 180, 85, 0.2) 30%,
+    rgba(0, 80, 40, 0.08) 55%,
+    transparent 72%
+  );
+  filter: blur(28px);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.25);
+  animation: crimeGreenLight 2.8s ease-out forwards;
+}
+
+/* Logo appears after the light */
+.logo-intro .intro-content {
   position: relative;
-  z-index: 2;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 18px;
-  animation: introLogoPop 1s cubic-bezier(.16,1,.3,1) both;
+  animation: introLogoPop 1s cubic-bezier(.16, 1, .3, 1) 0.8s both;
 }
 
-.intro-logo {
+.logo-intro .intro-logo {
   width: min(360px, 72vw);
   max-height: 48vh;
   object-fit: contain;
-  filter: drop-shadow(0 0 22px rgba(182,255,0,.3));
-  animation: introGlow 1.8s ease-in-out .9s infinite alternate;
+  filter: drop-shadow(0 0 18px rgba(0, 255, 128, 0.4));
+  animation: introGlow 1.8s ease-in-out 1s infinite alternate;
 }
 
-.intro-tagline {
-  margin: 0;
+.logo-intro .intro-tagline {
   color: #b6ff00;
-  font-size: 11px;
-  letter-spacing: .22em;
-  text-align: center;
-  opacity: 0;
-  animation: introTaglineIn .6s ease .8s forwards;
 }
 
-.intro-light {
-  position: absolute;
-  width: min(65vw, 700px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  filter: blur(60px);
-  pointer-events: none;
+.logo-intro .intro-light {
+  z-index: 0;
 }
 
-.intro-light-one {
-  background: radial-gradient(circle, rgba(182,255,0,.24), transparent 70%);
-  animation: introLightIn 1.4s ease both;
-}
-
-.intro-light-two {
-  width: min(38vw, 420px);
-  background: radial-gradient(circle, rgba(182,255,0,.18), transparent 68%);
-  animation: introLightPulse 2s ease-in-out .5s infinite alternate;
-}
-
-.intro-loader {
-  width: 130px;
-  height: 2px;
-  overflow: hidden;
-  background: rgba(182,255,0,.14);
-  opacity: 0;
-  animation: introTaglineIn .3s ease 1s forwards;
-}
-
-.intro-loader span {
-  display: block;
-  width: 40%;
-  height: 100%;
-  background: #b6ff00;
-  box-shadow: 0 0 12px #b6ff00;
-  animation: introLoadLine 1.6s ease-in-out infinite;
-}
-
-@keyframes introLogoPop {
-  from { opacity: 0; transform: scale(.78) translateY(12px); filter: blur(8px); }
-  65% { opacity: 1; transform: scale(1.035); filter: blur(0); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes introLightIn {
-  from { opacity: 0; transform: scale(.65); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes introLightPulse {
-  from { opacity: .35; transform: scale(.8); }
-  to { opacity: .9; transform: scale(1.08); }
-}
-
-@keyframes introGlow {
-  from { filter: drop-shadow(0 0 12px rgba(182,255,0,.18)); }
-  to { filter: drop-shadow(0 0 28px rgba(182,255,0,.42)); }
-}
-
-@keyframes introTaglineIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes introLoadLine {
-  from { transform: translateX(-110%); }
-  to { transform: translateX(360%); }
-}
-
-@keyframes introFadeOut {
-  to { opacity: 0; visibility: hidden; pointer-events: none; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .logo-intro, .intro-content, .intro-logo, .intro-tagline,
-  .intro-light, .intro-loader, .intro-loader span {
-    animation-duration: .01ms !important;
-    animation-iteration-count: 1 !important;
+@keyframes crimeGreenLight {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.25);
+  }
+  45% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+  100% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 
+@keyframes introLogoPop {
+  from {
+    opacity: 0;
+    transform: scale(0.78) translateY(12px);
+    filter: blur(8px);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.035);
+    filter: blur(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
 
+@keyframes introGlow {
+  from {
+    filter: drop-shadow(0 0 12px rgba(0, 255, 128, 0.18));
+  }
+  to {
+    filter: drop-shadow(0 0 28px rgba(0, 255, 128, 0.55));
+  }
+}
+
+@keyframes introFadeOut {
+  to {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-intro,
+  .logo-intro::before,
+  .logo-intro .intro-content,
+  .logo-intro .intro-logo {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
 
 .library-panel {
   margin-bottom: 24px;
@@ -271,3 +273,89 @@
     width: 100%;
   }
 }
+
+/* CrimeSketch cinematic green-light logo intro */
+.logo-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  overflow: hidden;
+  isolation: isolate;
+  background: #020604;
+}
+
+/* Green light appears before the logo */
+.logo-intro::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(75vw, 650px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  background: radial-gradient(
+    circle,
+    rgba(0, 255, 128, 0.42) 0%,
+    rgba(0, 180, 85, 0.2) 30%,
+    rgba(0, 80, 40, 0.08) 55%,
+    transparent 72%
+  );
+  filter: blur(28px);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.25);
+  animation: crimeGreenLight 2.8s ease-out forwards;
+}
+
+/* Existing logo pops out of the light */
+.logo-intro .intro-logo {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transform: scale(0.55);
+  filter: drop-shadow(0 0 0 rgba(0, 255, 128, 0));
+  animation: crimeLogoPop 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
+}
+
+@keyframes crimeGreenLight {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.25);
+  }
+  45% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+  100% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes crimeLogoPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.55);
+    filter: drop-shadow(0 0 0 rgba(0, 255, 128, 0));
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 32px rgba(0, 255, 128, 0.8));
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: drop-shadow(0 0 18px rgba(0, 255, 128, 0.4));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-intro::before,
+  .logo-intro .intro-logo {
+    animation-duration: 0.01ms;
+    animation-delay: 0ms;
+  }
+}
+

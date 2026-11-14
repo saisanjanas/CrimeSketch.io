@@ -282,7 +282,7 @@ export default function App() {
     updateCase(activeCase.id, { messages }); setChatDraft(''); setChatBusy(true);
     if (isDemo) {
       const key = Object.entries(activeCase.features || {}).find(([k, v]) => !String(v || '').trim());
-      const answer = key ? `Demo assistant: the ${fields.find(f => f.key === key[0])?.label || key[0]} is not provided yet. Ask the witness only if this detail is remembered; otherwise leave it as ΓÇ£Not providedΓÇ¥. No AI model is connected in demo mode.` : 'Demo assistant: the currently entered attributes can be reviewed. Please distinguish direct witness observations from uncertain recollections. No live model is connected.';
+      const answer = key ? `Demo assistant: the ${fields.find(f => f.key === key[0])?.label || key[0]} is not provided yet. Ask the witness only if this detail is remembered; otherwise leave it as Not providedΓÇ¥. No AI model is connected in demo mode.` : 'Demo assistant: the currently entered attributes can be reviewed. Please distinguish direct witness observations from uncertain recollections. No live model is connected.';
       setTimeout(() => { updateCase(activeCase.id, c => ({ messages: [...(c.messages || []), userMessage, { role: 'assistant', content: answer, at: stamp() }] })); setChatBusy(false); }, 350);
       return;
     }
@@ -296,7 +296,7 @@ export default function App() {
 
   const generateSketch = async () => {
     if (!activeCase) return;
-    if (isDemo) { setNotice({ type: 'warning', message: 'Stable Diffusion 1.5 is not connected. This demo will not fabricate a generated sketch. Configure the provider to enable generation.' }); setSketchPreview(true); return; }
+    if (isDemo) { setNotice({ type: 'warning', message: 'Agnes AI is not connected in demo mode. This demo will not fabricate a generated sketch. Use an authenticated case to enable generation.' }); setSketchPreview(true); return; }
     const description = Object.entries(activeCase.features || {}).filter(([k, v]) => Boolean(v) && k !== 'notes').map(([k, v]) => `${fields.find(f => f.key === k)?.label || k}: ${v}`).join('; ');
     try {
       const result = await api('/api/ai/sketch', { method: 'POST', body: JSON.stringify({ caseId: activeCase.dbId, prompt: `${description}. ${activeCase.features?.notes || ''}` }) });
@@ -311,7 +311,7 @@ export default function App() {
     e?.preventDefault();
     if (!activeCase || !refineDraft.trim()) return;
     const instruction = refineDraft.trim(); setRefineDraft(''); setRefineBusy(true);
-    if (isDemo) { setRefineBusy(false); setNotice({ type: 'warning', message: `Refinement request recorded in the demo UI: ΓÇ£${instruction}ΓÇ¥. No image was changed because Stable Diffusion is not connected.` }); addActivity(activeCase.id, 'Refinement request (demo)', instruction); return; }
+    if (isDemo) { setRefineBusy(false); setNotice({ type: 'warning', message: `Refinement request recorded in the demo UI: ${instruction}ΓÇ¥. No image was changed because Agnes AI is not connected in demo mode.` }); addActivity(activeCase.id, 'Refinement request (demo)', instruction); return; }
     try {
       const sourceSketch = activeCase.sketches?.[0];
       if (!sourceSketch?.id) throw new Error('Generate a sketch before requesting a refinement.');
@@ -339,7 +339,7 @@ export default function App() {
 
   const approveSketch = async (requestedSketchId = null) => {
     if (!activeCase) return;
-    if (isDemo) return setNotice({ type: 'warning', message: 'An illustrative/demo workspace cannot approve a generated sketch. Connect Stable Diffusion and use an authenticated case.' });
+    if (isDemo) return setNotice({ type: 'warning', message: 'An illustrative/demo workspace cannot approve a generated sketch. Use Agnes AI with an authenticated case.' });
     const sketch = (activeCase.sketches || []).find(s => s.id === requestedSketchId) || activeCase.sketches?.[0];
     if (!sketch?.id) return setNotice({ type: 'error', message: 'Generate a real sketch before approving it.' });
     try {
@@ -430,7 +430,7 @@ export default function App() {
   const integrations = health?.integrations || {};
   const statuses = [
     ['Gemma 4 / Ollama', integrations.gemma === 'configured_endpoint' ? 'endpoint set' : 'not checked', integrations.gemma === 'configured_endpoint'],
-    ['Stable Diffusion 1.5', integrations.stableDiffusion === 'configured' ? 'configured' : 'not connected', integrations.stableDiffusion === 'configured'],
+   ['Agnes AI', integrations.agnesImage === 'configured' ? 'configured' : 'not connected', integrations.agnesImage === 'configured'],
     ['Whisper', integrations.whisper === 'configured' ? 'configured' : 'not connected', integrations.whisper === 'configured'],
     ['Gemini Flash', integrations.gemini === 'configured' ? 'configured' : 'not connected', integrations.gemini === 'configured'],
     ['Hitem3D', integrations.hitem3d === 'configured' ? 'configured' : 'not connected', integrations.hitem3d === 'configured'],
@@ -580,7 +580,7 @@ function CaseWorkspace({ activeCase, isDemo, uploadKind, setUploadKind, textEvid
   const currentIndex = activeCase.status === 'archived' ? 0 : Math.max(0, stage.indexOf(activeCase.status));
   return <><div className="case-heading-row"><button className="back-link" onClick={() => go('cases')}><ArrowLeft size={15} /> CASE REGISTER</button><div className="case-tools"><Status status={activeCase.status} /><span className="mono case-ref">CASE / {activeCase.id}</span><IconButton icon={Ellipsis} label="Case actions" onClick={() => setDetailsOpen(v => !v)} /></div></div><PageHeading eyebrow="INVESTIGATION / ACTIVE RECORD" title={<>{activeCase.title.split('/')[0].trim().toUpperCase()}<span className="accent-dot">.</span><br /><span className="heading-light">CASE WORKSPACE</span></>} description={activeCase.summary || 'Review evidence and maintain the provenance of each case action.'} action={<PrimaryButton variant="outline" icon={History} onClick={() => setDetailsOpen(v => !v)}>CASE DETAILS</PrimaryButton>} /><div className="case-meta-grid"><div><span className="meta-key">CASE ID</span><strong className="mono">{activeCase.id}</strong></div><div><span className="meta-key">ASSIGNED INVESTIGATOR</span><strong>{activeCase.investigator || 'Not assigned'}</strong></div><div><span className="meta-key">LOCATION LABEL</span><strong>{activeCase.location || 'Not provided'}</strong></div><div><span className="meta-key">LAST UPDATED</span><strong className="mono">{activeCase.updated}</strong></div></div><div className="stepper">{[{ label:'CASE DETAILS', stage:'evidence' },{label:'EVIDENCE',stage:'evidence'},{label:'DESCRIPTION',stage:'description'},{label:'SKETCH',stage:'sketch'},{label:'REVIEW',stage:'review'},{label:'OUTPUT',stage:'complete'}].map((s,i) => <div key={s.label} className={`stepper-item ${((activeCase.status==='evidence' && i===0) || (i < currentIndex+1)) ? 'step-complete' : ''} ${(i===0&&activeCase.status==='evidence') || (s.stage===activeCase.status && i>0) ? 'step-current' : ''}`}><span>{i < currentIndex+1 ? <Check size={12}/> : String(i+1).padStart(2,'0')}</span><b>{s.label}</b></div>)}</div><div className="workspace-tabs"><button className={tab==='evidence'?'active':''} onClick={() => setTab('evidence')}><Paperclip size={15}/> EVIDENCE / INPUTS</button><button className={tab==='description'?'active':''} onClick={() => setTab('description')}><SlidersHorizontal size={15}/> FACIAL DESCRIPTION</button><button className={tab==='history'?'active':''} onClick={() => setTab('history')}><History size={15}/> HISTORY <span>{(activeCase.history || []).length}</span></button></div>
     {tab === 'evidence' && <div className="workspace-main-grid"><div className="workspace-primary"><section className="surface-panel evidence-panel"><div className="panel-heading"><div><SectionLabel trailing="01 / INTAKE">EVIDENCE / INGESTION</SectionLabel><h2>Witness input</h2></div><span className="mono faint">MAX 25 MB / FILE</span></div><div className="input-mode-tabs">{[{id:'text',label:'TEXT',icon:MessageSquareText},{id:'voice',label:'VOICE',icon:Mic},{id:'image',label:'IMAGE',icon:FileImage},{id:'pdf',label:'PDF',icon:FileText}].map(it => { const Icon=it.icon; return <button className={uploadKind===it.id?'active':''} onClick={() => setUploadKind(it.id)} key={it.id}><Icon size={17}/>{it.label}</button>; })}</div>{uploadKind === 'text' ? <div className="text-evidence-box"><label className="field"><span className="field-label">WITNESS DESCRIPTION / ORIGINAL TEXT</span><textarea value={textEvidence || activeCase.transcript || ''} onChange={e => setTextEvidence(e.target.value)} rows={7} placeholder="Enter the witness statement in its original language (Hindi, Kannada, Tamil, Telugu, English, etc.). Preserve the witnessΓÇÖs exact words and uncertainty." /></label><div className="text-evidence-footer"><span className="mono">{textEvidence.length} CHARACTERS</span><span>Original statement retained for review</span></div></div> : <button className="drop-zone" onClick={() => fileInput.current?.click()} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); handleFiles(e.dataTransfer.files); }}><input ref={fileInput} type="file" multiple accept={uploadKind==='voice'?'audio/*,video/mp4':uploadKind==='image'?'image/*':uploadKind==='pdf'?'.pdf':'.pdf,image/*,audio/*,.txt'} hidden onChange={e => { handleFiles(e.target.files); e.target.value=''; }} /><div className="drop-icon">{uploadKind==='voice'?<AudioLines size={22}/>:uploadKind==='image'?<ImageIcon size={22}/>:<FileText size={22}/>}</div><strong>DROP FILES TO INGEST</strong><span>or select from this device</span><small>PDF ┬╖ PNG ┬╖ JPG ┬╖ WEBP ┬╖ WAV ┬╖ MP3 ┬╖ M4A ┬╖ TXT / 25 MB max</small><span className="drop-cta"><Upload size={14}/> SELECT FILES</span></button>}{selectedFiles.length>0 && <div className="selected-files"><div className="selected-files-header"><span>SELECTED FILES ({selectedFiles.length})</span><button onClick={() => setSelectedFiles([])}>REMOVE ALL</button></div>{selectedFiles.map(item => <div className="selected-file" key={item.id}><div className="file-kind-icon">{item.kind==='audio'?<FileAudio size={16}/>:item.kind==='image'?<FileImage size={16}/>:<FileText size={16}/>}</div><div className="selected-file-info"><strong>{item.file.name}</strong><span className="mono">{(item.file.size/1024).toFixed(1)} KB ┬╖ READY FOR REVIEW</span></div><IconButton icon={X} label="Remove file" onClick={() => setSelectedFiles(prev => prev.filter(f => f.id !== item.id))} /></div>)}</div>}<div className="evidence-action-row"><div className="evidence-security"><LockKeyhole size={15}/><span>Private storage is available only in configured live mode. Demo files remain in browser memory.</span></div><PrimaryButton icon={Upload} onClick={saveEvidence}>SAVE EVIDENCE</PrimaryButton></div>{(activeCase.evidenceItems || []).length > 0 && <div className="evidence-history-list"><div className="evidence-history-head"><span>CASE EVIDENCE / SAVED ITEMS</span><span className="mono">{String(activeCase.evidenceItems.length).padStart(2,'0')} ITEMS</span></div>{activeCase.evidenceItems.map(item => <div className="evidence-history-row" key={item.id}><div className="file-kind-icon">{item.kind==='audio'?<FileAudio size={16}/>:item.kind==='image'?<FileImage size={16}/>:<FileText size={16}/>}</div><div className="evidence-history-name"><strong>{item.original_name || item.name}</strong><span className="mono">{item.mime_type || item.kind} ┬╖ {Math.max(0, Number(item.size_bytes || 0)/1024).toFixed(1)} KB ┬╖ {item.demo ? 'DEMO ONLY' : item.status || 'SAVED'}</span></div>{item.downloadUrl ? <a className="evidence-download" href={item.downloadUrl} target="_blank" rel="noreferrer" aria-label={`Download ${item.original_name}`}><Download size={14}/> DOWNLOAD</a> : <span className="mono evidence-private-note">NOT PERSISTED</span>}</div>)}</div>}</section><section className="surface-panel transcript-panel"><div className="panel-heading"><div><SectionLabel>TEXT PROCESSING</SectionLabel><h2>Transcript & translation</h2></div><span className="provider-tag"><Globe size={13}/> LANGUAGE / EN</span></div><div className="transcript-columns"><div className="transcript-column"><div className="transcript-subhead"><span>ORIGINAL / SOURCE</span><span className="status status-neutral"><i/>SOURCE</span></div><p>{textEvidence.trim() || activeCase.transcript || 'No source statement saved. Add text evidence above to begin.'}</p></div><div className="transcript-column translated-column"><div className="transcript-subhead"><span>ENGLISH / TRANSLATION</span><span className="status status-neutral"><i/>{translated ? 'REVIEW' : 'NOT RUN'}</span></div><p>{translated || (isDemo ? 'Demo mode does not call the translation service. Open a live case with the backend and translation model configured to translate Hindi, Kannada, Tamil, Telugu, or other supported languages.' : 'Submit a source statement and run translation when the configured service is available.')}</p>{!isDemo && <button className="link-button" onClick={translate} disabled={translateBusy}>{translateBusy?'PROCESSINGΓÇª':'TRANSLATE TO ENGLISH'} <ArrowRight size={14}/></button>}</div></div>{(!isDemo) && <div className="transcript-note"><AlertCircle size={14}/> Translation must be reviewed against the original before confirmation.</div>}</section></div><aside className="workspace-aside"><div className="surface-panel aside-case-panel"><div className="aside-case-head"><SectionLabel>CASE SUMMARY</SectionLabel><button className="icon-link" onClick={() => setDetailsOpen(v=>!v)}><ChevronDown size={15}/></button></div>{detailsOpen && <><div className="summary-id mono">{activeCase.id}</div><h3>{activeCase.title}</h3><p>{activeCase.notes || 'No intake notes provided.'}</p><div className="summary-stats"><div><span>EVIDENCE ITEMS</span><strong>{String(activeCase.evidence || 0).padStart(2,'0')}</strong></div><div><span>WITNESSES</span><strong>{String(activeCase.numberOfWitnesses ?? activeCase.number_of_witnesses ?? 0).padStart(2,'0')}</strong></div></div><div className="aside-mini-meta"><span>OWNER</span><strong>{activeCase.investigator || 'Not assigned'}</strong></div><div className="aside-mini-meta"><span>CLASSIFICATION</span><strong>{activeCase.classification || 'RESTRICTED'}</strong></div></>}</div><button type="button" className="surface-panel next-stage-panel next-stage-panel-large" onClick={() => setTab('description')}><span className="next-stage-icon"><SlidersHorizontal size={24}/></span><SectionLabel>UP NEXT / 03</SectionLabel><h3>Confirm facial description</h3><p>Review the witness details and confirm only what the source statement supports.</p><span className="next-stage-action">OPEN FACIAL DESCRIPTION <ArrowRight size={16}/></span></button></aside></div>}
-    {tab === 'description' && <div className="description-layout"><section className="surface-panel description-form-panel"><div className="panel-heading"><div><SectionLabel trailing="02 / STRUCTURED INPUT">FACIAL DESCRIPTION</SectionLabel><h2>Confirm extracted attributes</h2></div><Status status="warning">NEEDS REVIEW</Status></div><div className="source-quote"><div className="quote-mark">ΓÇ£</div><div><span className="mono">SOURCE STATEMENT</span><p>{textEvidence.trim() || activeCase.transcript || 'No source statement recorded yet.'}</p></div></div><div className="form-grid">{fields.map(field => <div key={field.key} className={field.key==='notes'?'span-two':''}>{field.options ? <Field label={field.label} value={f[field.key]} onChange={v => setFeature(field.key,v)} options={field.options}/> : <Field label={field.label} value={f[field.key]} onChange={v => setFeature(field.key,v)} placeholder={field.placeholder} type={field.key==='notes'?'textarea':'text'} />}</div>)}</div><div className="form-footer"><span className="required-note">MISSING VALUES WILL STAY ΓÇ£NOT PROVIDEDΓÇ¥</span><PrimaryButton icon={CheckCircle2} onClick={confirmDescription} disabled={!canConfirm}>CONFIRM & CONTINUE</PrimaryButton></div></section></div>}
+    {tab === 'description' && <div className="description-layout"><section className="surface-panel description-form-panel"><div className="panel-heading"><div><SectionLabel trailing="02 / STRUCTURED INPUT">FACIAL DESCRIPTION</SectionLabel><h2>Confirm extracted attributes</h2></div><Status status="warning">NEEDS REVIEW</Status></div><div className="source-quote"><div className="quote-mark"></div><div><span className="mono">SOURCE STATEMENT</span><p>{textEvidence.trim() || activeCase.transcript || 'No source statement recorded yet.'}</p></div></div><div className="form-grid">{fields.map(field => <div key={field.key} className={field.key==='notes'?'span-two':''}>{field.options ? <Field label={field.label} value={f[field.key]} onChange={v => setFeature(field.key,v)} options={field.options}/> : <Field label={field.label} value={f[field.key]} onChange={v => setFeature(field.key,v)} placeholder={field.placeholder} type={field.key==='notes'?'textarea':'text'} />}</div>)}</div><div className="form-footer"><span className="required-note">MISSING VALUES WILL STAY NOT PROVIDEDΓÇ¥</span><PrimaryButton icon={CheckCircle2} onClick={confirmDescription} disabled={!canConfirm}>CONFIRM & CONTINUE</PrimaryButton></div></section></div>}
     {tab === 'history' && <HistoryPanel activeCase={activeCase} />}
   </>;
 }
@@ -599,24 +599,85 @@ function SketchStudio({ activeCase, isDemo, generateSketch, sketchPreview, setSk
   return <>
     <div className="case-heading-row"><button className="back-link" onClick={() => setRoute('case')}><ArrowLeft size={15}/> CASE WORKSPACE</button><div className="case-tools"><span className="mono case-ref">CASE / {activeCase.id}</span><Status status="warning">PROVIDER STATUS</Status></div></div>
     <PageHeading eyebrow="IMAGE SYNTHESIS / HUMAN REVIEW" title={<>SKETCH<br/><span className="heading-light">STUDIO.</span></>} description="Generate and refine a candidate sketch from investigator-confirmed attributes. No image-generation provider is connected by default." action={<PrimaryButton icon={FileText} variant="outline" disabled={!isDemo && !activeCase.sketches?.some(s => s.status === 'approved')} onClick={() => setRoute('report')}>OUTPUTS</PrimaryButton>} />
-    <div className="sketch-status-banner"><div className="status-pulse"><AlertCircle size={18}/></div><div><strong>{isDemo ? 'STABLE DIFFUSION 1.5 / NOT CONNECTED' : 'IMAGE GENERATION PROVIDER'}</strong><span>{isDemo ? 'The studio is ready for review, but no model-generated sketch will be fabricated in demo mode.' : 'Generation requires a configured Stable Diffusion WebUI-compatible provider. Requests are not marked successful until a real image is returned.'}</span></div><Mono>IMG / SD15</Mono></div>
-    <div className="sketch-studio-grid">
-      <section className="surface-panel sketch-canvas-panel">
-        <div className="canvas-header"><div><SectionLabel>OUTPUT CANVAS / PRIMARY</SectionLabel><h2>Candidate sketch</h2></div><div className="canvas-tools"><button className={`tool-button ${compare?'active':''}`} onClick={() => setCompare(v=>!v)}><SlidersHorizontal size={14}/> COMPARE</button><IconButton icon={Download} label="Export sketch" disabled={!selectedSketch?.url} onClick={() => { if (selectedSketch?.url) window.open(selectedSketch.url, '_blank', 'noopener'); }} /></div></div>
-        <div className="sketch-canvas"><div className="canvas-corners"><i/><i/><i/><i/></div>{sketchPreview && <div className="canvas-demo-watermark">DEMO / NO MODEL OUTPUT</div>}
-          {selectedSketch?.url ? <div className={`generated-sketch-wrap ${compare && comparisonSketch?.url ? 'compare-mode' : ''}`}>
-            {compare && comparisonSketch?.url && <figure className="compare-figure"><img className="generated-sketch" src={comparisonSketch.url} alt={`Sketch version ${comparisonSketch.version}`}/><figcaption>PREVIOUS / V{String(comparisonSketch.version).padStart(2,'0')}</figcaption></figure>}
-            <figure className="current-figure"><img className="generated-sketch" src={selectedSketch.url} alt={`Candidate sketch version ${selectedSketch.version}`}/><figcaption>{selectedSketch.status === 'approved' ? 'APPROVED' : 'SELECTED'} / V{String(selectedSketch.version).padStart(2,'0')}</figcaption></figure>
-            <div className="generated-sketch-label"><span className="mono">VERSION / {String(selectedSketch.version).padStart(2,'0')}</span><span className="mono">{String(selectedSketch.status || 'candidate').toUpperCase()} ┬╖ REVIEW REQUIRED</span></div>
-          </div> : <div className="sketch-empty-art"><div className="crosshair crosshair-a"/><div className="crosshair crosshair-b"/><div className="sketch-frame-icon"><ImageIcon size={28}/></div><strong>NO GENERATED IMAGE</strong><span>Image output will appear here after Stable Diffusion 1.5 successfully returns an artifact.</span><div className="mono sketch-empty-meta">CANVAS / 512 ├ù 512 TARGET</div></div>}
+    
+<div className="sketch-status-banner">
+  <div className="status-pulse">
+    <AlertCircle size={18}/>
+  </div>
+  <div>
+    <strong>{isDemo ? 'AGNES AI / NOT CONNECTED' : 'AGNES AI IMAGE GENERATION'}</strong>
+    <span>
+      {isDemo
+        ? 'The studio is ready for review, but no model-generated sketch will be fabricated in demo mode.'
+        : 'Generation requires a configured Agnes AI provider. Requests are not marked successful until a real image is returned.'}
+    </span>
+  </div>
+</div>
+
+<div className="sketch-layout">
+  <section className="surface-panel sketch-main-panel">
+  <div className="canvas-header">
+    <div>
+      <SectionLabel>OUTPUT CANVAS / PRIMARY</SectionLabel>
+      <h2>Candidate sketch</h2>
+    </div>
+    <div className="canvas-tools">
+      <button className={`tool-button ${compare ? 'active' : ''}`} onClick={() => setCompare(v => !v)}>
+        <SlidersHorizontal size={14}/> COMPARE
+      </button>
+      <IconButton
+        icon={Download}
+        label="Export sketch"
+        disabled={!selectedSketch?.url}
+        onClick={() => {
+          if (selectedSketch?.url) window.open(selectedSketch.url, '_blank', 'noopener');
+        }}
+      />
+    </div>
+  </div>
+
+  <div className="sketch-canvas">
+    <div className="canvas-corners"><i/><i/><i/><i/></div>
+    {sketchPreview && <div className="canvas-demo-watermark">DEMO / NO MODEL OUTPUT</div>}
+
+    {selectedSketch?.url ? (
+      <div className={`generated-sketch-wrap ${compare && comparisonSketch?.url ? 'compare-mode' : ''}`}>
+        {compare && comparisonSketch?.url && (
+          <figure className="compare-figure">
+            <img className="generated-sketch" src={comparisonSketch.url} alt={`Sketch version ${comparisonSketch.version}`}/>
+            <figcaption>PREVIOUS / V{String(comparisonSketch.version).padStart(2, '0')}</figcaption>
+          </figure>
+        )}
+        <figure className="current-figure">
+          <img className="generated-sketch" src={selectedSketch.url} alt={`Candidate sketch version ${selectedSketch.version}`}/>
+          <figcaption>{selectedSketch.status === 'approved' ? 'APPROVED' : 'SELECTED'} / V{String(selectedSketch.version).padStart(2, '0')}</figcaption>
+        </figure>
+        <div className="generated-sketch-label">
+          <span className="mono">VERSION / {String(selectedSketch.version).padStart(2, '0')}</span>
+          <span className="mono">{String(selectedSketch.status || 'candidate').toUpperCase()} / REVIEW REQUIRED</span>
         </div>
+      </div>
+    ) : (
+      <div className="sketch-empty-art">
+        <div className="crosshair crosshair-a"/>
+        <div className="crosshair crosshair-b"/>
+        <div className="sketch-frame-icon"><ImageIcon size={28}/></div>
+        <strong>NO GENERATED IMAGE</strong>
+        <span>Image output will appear here after Agnes AI successfully returns an image.</span>
+        <div className="mono sketch-empty-meta">CANVAS / 512 × 512 TARGET</div>
+      </div>
+    )}
+  </div>
+
+
+
         <div className="canvas-footer"><span className="mono">{selectedSketch ? `VERSION ${String(selectedSketch.version).padStart(2,'0')}` : sketchPreview ? 'DEMO PREVIEW REQUESTED' : 'NO SKETCH VERSION'}</span><span className="mono">{selectedSketch ? `CREATED / ${String(selectedSketch.at || '').slice(0,19)}` : 'CREATED / ΓÇö'}</span><span className="mono">MODEL / SD 1.5</span></div>
         <div className="sketch-actions"><PrimaryButton icon={Sparkles} onClick={generateSketch}>GENERATE SKETCH</PrimaryButton><button className="btn btn-outline" onClick={generateSketch}>GENERATE ALTERNATIVE</button><button className="btn btn-ghost" onClick={() => setShowVersions(v => !v)}><History size={15}/> VERSION HISTORY <span className="version-count">{activeCase.sketches?.length || 0}</span></button></div>
         {compare && (!comparisonSketch?.url || !selectedSketch?.url) && <div className="compare-notice"><SlidersHorizontal size={15}/> Comparison requires two real sketch versions.</div>}
         {showVersions && <div className="version-history-list"><div className="version-list-heading"><span>GENERATED VERSIONS</span><span className="mono">{(activeCase.sketches || []).length.toString().padStart(2,'0')} RECORDS</span></div>
           {(activeCase.sketches || []).length ? activeCase.sketches.map(sk => <div className={`version-list-row ${selectedSketch?.id === sk.id ? 'selected' : ''}`} key={sk.id}><button className="version-select" onClick={() => setSelectedSketchId(sk.id)}><span className="version-bullet">{selectedSketch?.id === sk.id ? <Check size={12}/> : String(sk.version).padStart(2,'0')}</span><span><strong>Version {String(sk.version).padStart(2,'0')}</strong><small className="mono">{String(sk.at || '').slice(0,19)} ┬╖ {String(sk.model || sk.model_name || 'Stable Diffusion 1.5')}</small></span><Status status={sk.status === 'approved' ? 'complete' : 'warning'}>{sk.status || 'candidate'}</Status></button>{!isDemo && <button className="restore-version" onClick={() => restoreSketch(sk.id)} title="Restore this version as a new version">RESTORE <RefreshCcw size={12}/></button>}</div>) : <div className="version-empty">No generated sketch versions are saved yet.</div>}
         </div>}
-      </section>
+      </section>  
       <aside className="sketch-side-column">
         <section className="surface-panel attributes-mini"><div className="panel-heading"><div><SectionLabel>INPUT / CONFIRMED FIELDS</SectionLabel><h2>Sketch attributes</h2></div><span className="mono">{attrs.length.toString().padStart(2,'0')}</span></div>{attrs.length ? attrs.map(([key,value])=><div className="attribute-row" key={key}><span>{fields.find(f=>f.key===key)?.label || key}</span><strong>{value}</strong></div>) : <div className="attribute-empty"><AlertCircle size={16}/><span>No confirmed attributes entered. Return to the description form and review the source statement.</span></div>}<button className="link-button" onClick={() => setRoute('case')}>EDIT DESCRIPTION <ArrowRight size={14}/></button></section>
         <section className="surface-panel refinement-panel"><div className="panel-heading"><div><SectionLabel>ITERATION / 01</SectionLabel><h2>Refinement assistant</h2></div><span className="assistant-dot"/></div><div className="refinement-scope"><Sparkles size={14}/><span>FACIAL ATTRIBUTES ONLY</span></div><div className="refinement-messages"><div className="assistant-message"><div className="assistant-avatar"><BrainCircuit size={15}/></div><div><span className="mono">ASSISTANT / STATUS</span><p>{isDemo ? 'I can record a refinement request in the demo interface. Gemma 4 and the image-generation service are not connected here, so no image will be altered.' : 'Send a focused modification. The provider must return a new image before this workspace can record a successful refinement.'}</p></div></div>{(activeCase.messages || []).filter(m => m.role === 'user' && m.content.toLowerCase().includes('make')).slice(-2).map((m,i)=><div className="refinement-user-message" key={i}><span className="mono">REQUEST / {i+1}</span><p>{m.content}</p></div>)}</div><form className="refinement-compose" onSubmit={submitRefinement}><textarea value={refineDraft} onChange={e=>setRefineDraft(e.target.value)} placeholder="Describe one specific facial adjustmentΓÇª" rows={3}/><div className="compose-footer"><span className="mono">NO IDENTITY MATCHING</span><button disabled={refineBusy || !refineDraft.trim()} type="submit" aria-label="Send refinement request">{refineBusy?<RefreshCcw size={16} className="spin"/>:<Send size={16}/>}</button></div></form><div className="refinement-examples"><span>EXAMPLES</span><button onClick={()=>setRefineDraft('Make the jawline slightly wider.')}>Wider jawline</button><button onClick={()=>setRefineDraft('Make the eyebrows thicker.')}>Thicker brows</button><button onClick={()=>setRefineDraft('Make the nose narrower.')}>Narrower nose</button></div></section>
@@ -643,7 +704,7 @@ function SecurityPage({ user, isDemo, integrations, health, logout, setNotice })
     { label:'PostgreSQL database', state:health?.database==='connected'?'Connected':'Not connected', ok:health?.database==='connected', note:'Cases, permissions, and audit events' },
     { label:'Email / OTP delivery', state:integrations.emailOtp==='configured'?'Configured':'Not configured', ok:integrations.emailOtp==='configured', note:'Required for real 2FA sign-in' },
     { label:'Gemma 4 / Ollama', state:integrations.gemma==='configured_endpoint'?'Endpoint set':'Not configured', ok:integrations.gemma==='configured_endpoint', note:'Local model endpoint; model availability must be tested' },
-    { label:'Stable Diffusion 1.5', state:integrations.stableDiffusion==='configured'?'Configured':'Not configured', ok:integrations.stableDiffusion==='configured', note:'Provider-specific image adapter required' },
+    { label:'Agnes AI', state:integrations.agnesImage==='configured'?'Configured':'Not configured', ok:integrations.agnesImage==='configured', note:'Agnes AI image-generation API' },
     { label:'Whisper transcription', state:integrations.whisper==='configured'?'Configured':'Not configured', ok:integrations.whisper==='configured', note:'Provider-specific transcription adapter required' },
     { label:'Gemini Flash', state:integrations.gemini==='configured'?'Configured':'Not configured', ok:integrations.gemini==='configured', note:'Server-side API key required for report content' },
     { label:'Hitem3D', state:integrations.hitem3d==='configured'?'Configured':'Not configured', ok:integrations.hitem3d==='configured', note:'Supported API/workflow and credentials required' },
